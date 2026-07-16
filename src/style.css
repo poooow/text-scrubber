@@ -349,10 +349,10 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'%3E%3C/path%3E%3Cpolyline points='14 2 14 8 20 8'%3E%3C/polyline%3E%3Cline x1='12' y1='18' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='9' y1='15' x2='15' y2='15'%3E%3C/line%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'%3E%3C/path%3E%3Cpolyline points='14 2 14 8 20 8'%3E%3C/polyline%3E%3Cline x1='12' y1='18' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='9' y1='15' x2='15' y2='15'%3E%3C/line%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: center 30%;
-    padding-top: 60px;
+    background-position: center calc(50% - 30px);
+      padding-top: 50px;
     /* Make room for the icon */
     opacity: 0.5;
 }

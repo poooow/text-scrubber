@@ -64,6 +64,24 @@ function unwrap(el: Element) {
 }
 
 function detectAndConvertLists(body: HTMLElement, doc: Document) {
+  const brs = Array.from(body.querySelectorAll('p br, div br'))
+  for (const br of brs) {
+    const block = br.closest('p, div')
+    if (!block) continue
+    
+    const range = doc.createRange()
+    range.setStartAfter(br)
+    range.setEndAfter(block.lastChild || block)
+    
+    const content = range.extractContents()
+    br.parentNode?.removeChild(br)
+    
+    const newBlock = doc.createElement(block.tagName)
+    newBlock.appendChild(content)
+    
+    block.parentNode?.insertBefore(newBlock, block.nextSibling)
+  }
+
   const paragraphs = Array.from(body.querySelectorAll('p, div'))
   const bulletRegex = /^\s*([•·\-*])[\s\xA0]+(.*)/s
   

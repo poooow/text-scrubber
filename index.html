@@ -13,15 +13,15 @@
   <body>
     <div id="app">
       <header class="app-header">
-        <h1>Text Scrubber <span>//</span> Převod do Markdownu</h1>
-        <p>Vložte formátovaný text z MS Word nebo Google Docs pro jeho vyčištění a převod do standardního Markdownu.</p>
+        <h1>Text Scrubber</h1>
+        <p>Vložte formátovaný text z MS Word nebo Google Docs pro jeho vyčištění a přípravu pro WYSIWYG editory (TinyMCE).</p>
       </header>
 
       <main class="layout-container">
         <!-- LEFT SIDE: INPUT & SETTINGS -->
         <section class="panel input-panel">
           <div class="panel-header">
-            <h2>1. Nastavení a vstup</h2>
+            <h2>1. Vstup</h2>
           </div>
           
           <div class="settings-container glass-card">
@@ -57,6 +57,21 @@
                 <span class="checkmark"></span>
                 Tabulky
               </label>
+              <label class="toggle-checkbox">
+                <input type="checkbox" id="setting-colors">
+                <span class="checkmark"></span>
+                Barvy
+              </label>
+              <label class="toggle-checkbox">
+                <input type="checkbox" id="setting-fonts">
+                <span class="checkmark"></span>
+                Fonty
+              </label>
+              <label class="toggle-checkbox">
+                <input type="checkbox" id="setting-alignment">
+                <span class="checkmark"></span>
+                Zarovnání
+              </label>
             </div>
           </div>
 
@@ -73,12 +88,12 @@
         <!-- RIGHT SIDE: OUTPUT -->
         <section class="panel output-panel">
           <div class="panel-header">
-            <h2>2. Výstup v Markdownu</h2>
-            <button id="copy-btn" class="btn btn-primary">Kopírovat do schránky</button>
+            <h2>2. Výstup</h2>
+            <button id="copy-btn" class="btn btn-primary">Kopírovat do schránky (Rich Text)</button>
           </div>
           
           <div class="editor-container glass-card output-container">
-            <textarea id="markdown-output" readonly placeholder="Zde se zobrazí čistý markdown..."></textarea>
+            <div id="html-output" class="rich-textarea" placeholder="Zde se zobrazí čisté HTML..."></div>
           </div>
         </section>
       </main>

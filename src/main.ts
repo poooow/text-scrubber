@@ -1,9 +1,8 @@
 import './style.css'
-import TurndownService from 'turndown'
 
 // 1. Elements
 const richInput = document.getElementById('rich-input') as HTMLDivElement
-const markdownOutput = document.getElementById('markdown-output') as HTMLTextAreaElement
+const htmlOutput = document.getElementById('html-output') as HTMLDivElement
 const clearBtn = document.getElementById('clear-btn') as HTMLButtonElement
 const copyBtn = document.getElementById('copy-btn') as HTMLButtonElement
 
@@ -15,6 +14,9 @@ const settings = {
   lists: document.getElementById('setting-lists') as HTMLInputElement,
   headings: document.getElementById('setting-headings') as HTMLInputElement,
   tables: document.getElementById('setting-tables') as HTMLInputElement,
+  colors: document.getElementById('setting-colors') as HTMLInputElement,
+  fonts: document.getElementById('setting-fonts') as HTMLInputElement,
+  alignment: document.getElementById('setting-alignment') as HTMLInputElement,
 }
 
 // 2. LocalStorage for Settings
@@ -42,22 +44,30 @@ function saveSettings() {
     current[key] = el.checked
   }
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(current))
-  processInput() // re-process the input when settings change
+  processInput()
 }
 
-// Add listeners to settings
 for (const el of Object.values(settings)) {
   el.addEventListener('change', saveSettings)
 }
 loadSettings()
 
-// 3. Clean MS Word HTML
+// Helper to unwrap an element (replace element with its children)
+function unwrap(el: Element) {
+  const parent = el.parentNode
+  if (!parent) return
+  while (el.firstChild) {
+    parent.insertBefore(el.firstChild, el)
+  }
+  parent.removeChild(el)
+}
+
+// 3. Clean HTML Logic
 function cleanMsWordHtml(html: string): string {
-  // MS Word injects tons of metadata. We can just use a DOM parser to strip it.
   const parser = new DOMParser()
   const doc = parser.parseFromString(html, 'text/html')
 
-  // Remove comments (like <!--[if gte mso 9]>...)
+  // Remove comments
   const removeComments = (node: Node) => {
     for (let i = node.childNodes.length - 1; i >= 0; i--) {
       const child = node.childNodes[i]
@@ -70,161 +80,158 @@ function cleanMsWordHtml(html: string): string {
   }
   removeComments(doc.body)
 
-  // Remove all style attributes and class attributes if we want it completely clean
-  // since Turndown only cares about tags
+  // Remove all visual/styling attributes
   const elements = doc.body.getElementsByTagName('*')
-  for (let i = 0; i < elements.length; i++) {
-    elements[i].removeAttribute('style')
-    elements[i].removeAttribute('class')
-    elements[i].removeAttribute('id')
-    elements[i].removeAttribute('lang')
+  // We iterate backwards when modifying collections or unwrapping
+  for (let i = elements.length - 1; i >= 0; i--) {
+    const el = elements[i]
     
-    // MS Word specifically uses o:p tags for paragraphs
-    if (elements[i].tagName.toLowerCase() === 'o:p') {
-      // Just replace <o:p>...</o:p> with its content or a space
-      elements[i].outerHTML = elements[i].innerHTML
+    // Always strip these
+    el.removeAttribute('class')
+    el.removeAttribute('id')
+    el.removeAttribute('lang')
+    el.removeAttribute('dir')
+    if (!settings.alignment.checked) {
+      el.removeAttribute('align')
+    }
+    
+    // Process style attribute conditionally
+    const styleStr = el.getAttribute('style')
+    if (styleStr) {
+      const newStyles: string[] = []
+      const styles = styleStr.split(';').map(s => s.trim()).filter(Boolean)
+      for (const s of styles) {
+        const parts = s.split(':')
+        if (parts.length < 2) continue
+        const prop = parts[0].trim().toLowerCase()
+        const val = parts.slice(1).join(':').trim()
+        
+        if (settings.colors.checked && (prop === 'color' || prop === 'background' || prop === 'background-color')) {
+          newStyles.push(`${prop}: ${val}`)
+        }
+        if (settings.fonts.checked && (prop === 'font-family' || prop === 'font-size' || prop === 'font-weight' || prop === 'font-style')) {
+          newStyles.push(`${prop}: ${val}`)
+        }
+        if (settings.alignment.checked && prop === 'text-align') {
+          newStyles.push(`${prop}: ${val}`)
+        }
+      }
+      
+      if (newStyles.length > 0) {
+        el.setAttribute('style', newStyles.join('; '))
+      } else {
+        el.removeAttribute('style')
+      }
+    }
+    
+    const tagName = el.tagName.toLowerCase()
+
+    // MS Word specifically uses o:p tags
+    if (tagName === 'o:p') {
+      unwrap(el)
+      continue
+    }
+    
+    // Empty paragraphs from word
+    if (tagName === 'p' && el.innerHTML.trim() === '&nbsp;') {
+      el.innerHTML = ''
+    }
+
+    // Apply conditional unwrapping based on settings
+
+    // Bold
+    if (!settings.bold.checked && (tagName === 'b' || tagName === 'strong')) {
+      unwrap(el)
+      continue
+    }
+
+    // Italic
+    if (!settings.italic.checked && (tagName === 'i' || tagName === 'em')) {
+      unwrap(el)
+      continue
+    }
+
+    // Links
+    if (!settings.links.checked && tagName === 'a') {
+      unwrap(el)
+      continue
+    }
+
+    // Lists (We convert lists to paragraphs if lists are disabled)
+    if (!settings.lists.checked && (tagName === 'ul' || tagName === 'ol')) {
+      unwrap(el)
+      continue
+    }
+    if (!settings.lists.checked && tagName === 'li') {
+      const p = doc.createElement('p')
+      p.innerHTML = el.innerHTML
+      el.parentNode?.replaceChild(p, el)
+      continue
+    }
+
+    // Headings (convert to paragraph if disabled)
+    if (!settings.headings.checked && /^h[1-6]$/.test(tagName)) {
+      const p = doc.createElement('p')
+      p.innerHTML = el.innerHTML
+      el.parentNode?.replaceChild(p, el)
+      continue
+    }
+
+    // Tables (extract all cells as paragraphs if disabled)
+    if (!settings.tables.checked) {
+      if (tagName === 'table' || tagName === 'tbody' || tagName === 'thead' || tagName === 'tr') {
+        unwrap(el)
+        continue
+      }
+      if (tagName === 'td' || tagName === 'th') {
+        const p = doc.createElement('p')
+        p.innerHTML = el.innerHTML
+        el.parentNode?.replaceChild(p, el)
+        continue
+      }
+    }
+  }
+
+  // Remove empty inline tags that might have been left behind
+  const inlineTags = ['b', 'strong', 'i', 'em', 'span', 'a']
+  for (let i = elements.length - 1; i >= 0; i--) {
+    const el = elements[i]
+    if (inlineTags.includes(el.tagName.toLowerCase()) && el.innerHTML.trim() === '') {
+      el.parentNode?.removeChild(el)
+    }
+    // Unwrap meaningless spans
+    if (el.tagName.toLowerCase() === 'span' && el.attributes.length === 0) {
+      unwrap(el)
     }
   }
 
   return doc.body.innerHTML
 }
 
-// 4. Configure Turndown
-function getTurndownService(): TurndownService {
-  // We specify headings style etc.
-  const td = new TurndownService({
-    headingStyle: 'atx',
-    hr: '---',
-    bulletListMarker: '-',
-    codeBlockStyle: 'fenced'
-  })
-
-  // Apply conditional rules based on settings
-  
-  // Bold
-  if (!settings.bold.checked) {
-    td.addRule('removeBold', {
-      filter: ['strong', 'b'],
-      replacement: function (content) {
-        return content
-      }
-    })
-  }
-
-  // Italic
-  if (!settings.italic.checked) {
-    td.addRule('removeItalic', {
-      filter: ['em', 'i'],
-      replacement: function (content) {
-        return content
-      }
-    })
-  }
-
-  // Links
-  if (!settings.links.checked) {
-    td.addRule('removeLinks', {
-      filter: 'a',
-      replacement: function (content) {
-        return content
-      }
-    })
-  }
-
-  // Lists
-  if (!settings.lists.checked) {
-    td.addRule('removeLists', {
-      filter: ['ul', 'ol', 'li'],
-      replacement: function (content) {
-        // Just extract text and add a newline
-        return content + '\n'
-      }
-    })
-  }
-
-  // Headings
-  if (!settings.headings.checked) {
-    td.addRule('removeHeadings', {
-      filter: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
-      replacement: function (content) {
-        return '\n\n' + content + '\n\n'
-      }
-    })
-  }
-
-  // Tables
-  if (!settings.tables.checked) {
-    td.addRule('removeTables', {
-      filter: ['table', 'thead', 'tbody', 'tr', 'td', 'th'],
-      replacement: function (content, node) {
-        // Basic extraction of text if tables are disabled
-        if (node.nodeName === 'TR') return '\n' + content
-        if (node.nodeName === 'TD' || node.nodeName === 'TH') return ' ' + content + ' '
-        return content
-      }
-    })
-  } else {
-    // Add GitHub flavored markdown table support natively if kept
-    // We'll implement a basic gfm table rule
-    td.addRule('table', {
-      filter: 'table',
-      replacement: function (content) {
-        return '\n\n' + content + '\n\n'
-      }
-    })
-    td.addRule('tableRow', {
-      filter: 'tr',
-      replacement: function (content, node) {
-        let res = ''
-        if (node.parentNode?.nodeName === 'THEAD') {
-          // generate header separator
-          const childCount = node.childNodes.length
-          const separator = Array.from({ length: childCount }).map(() => '---').join(' | ')
-          res = '\n|' + separator + '|'
-        }
-        return '|' + content + '\n' + res
-      }
-    })
-    td.addRule('tableCell', {
-      filter: ['th', 'td'],
-      replacement: function (content) {
-        return ' ' + content.trim().replace(/\n/g, ' ') + ' |'
-      }
-    })
-  }
-
-  return td
-}
-
-// 5. Process Input
+// 4. Process Input
 function processInput() {
   const html = richInput.innerHTML
   if (!html.trim()) {
-    markdownOutput.value = ''
+    htmlOutput.innerHTML = ''
     return
   }
   
-  const cleanedHtml = cleanMsWordHtml(html)
-  const td = getTurndownService()
-  
   try {
-    const markdown = td.turndown(cleanedHtml)
-    markdownOutput.value = markdown
+    const cleanedHtml = cleanMsWordHtml(html)
+    htmlOutput.innerHTML = cleanedHtml
   } catch (err) {
-    console.error("Chyba při převodu:", err)
-    markdownOutput.value = "Chyba při převodu. Zkontrolujte konzoli pro více detailů."
+    console.error("Chyba při čištění:", err)
+    htmlOutput.innerHTML = "<span style='color:red;'>Chyba při čištění. Zkontrolujte konzoli.</span>"
   }
 }
 
-// 6. Event Listeners
+// 5. Event Listeners
 richInput.addEventListener('input', () => {
   processInput()
 })
 
 richInput.addEventListener('paste', (e) => {
   e.preventDefault()
-  
-  // Try to get HTML payload first
   const html = e.clipboardData?.getData('text/html')
   const text = e.clipboardData?.getData('text/plain')
   
@@ -241,10 +248,21 @@ clearBtn.addEventListener('click', () => {
 })
 
 copyBtn.addEventListener('click', async () => {
-  if (!markdownOutput.value) return
+  const cleanHtml = htmlOutput.innerHTML
+  if (!cleanHtml) return
   
   try {
-    await navigator.clipboard.writeText(markdownOutput.value)
+    // Copy as rich text (text/html) and plain text fallback
+    const blobHtml = new Blob([cleanHtml], { type: 'text/html' })
+    const blobText = new Blob([htmlOutput.innerText], { type: 'text/plain' })
+    
+    const data = [new ClipboardItem({
+      'text/html': blobHtml,
+      'text/plain': blobText
+    })]
+    
+    await navigator.clipboard.write(data)
+    
     const originalText = copyBtn.innerText
     copyBtn.innerText = 'Zkopírováno!'
     setTimeout(() => {
@@ -252,6 +270,7 @@ copyBtn.addEventListener('click', async () => {
     }, 2000)
   } catch (err) {
     console.error('Kopírování selhalo: ', err)
+    alert('Kopírování selhalo. Váš prohlížeč možná nepodporuje Clipboard API.')
   }
 })
 

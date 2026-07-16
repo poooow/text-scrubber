@@ -13,78 +13,92 @@
   <body>
     <div id="app">
       <header class="app-header">
-        <h1>Text Scrubber</h1>
-        <p>Vložte formátovaný text z MS Word nebo Google Docs pro jeho vyčištění a přípravu pro WYSIWYG editory (TinyMCE).</p>
+        <div class="header-text">
+          <h1>Text Scrubber</h1>
+          <p>Vložte formátovaný text z MS Word nebo Google Docs pro jeho vyčištění a přípravu pro WYSIWYG editory (TinyMCE).</p>
+        </div>
+        <div class="settings-container glass-card" id="settings-container">
+          <h3 class="settings-header" id="settings-collapse-btn" role="button" tabindex="0">
+            <span>Zachovat styly</span>
+            <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+          </h3>
+          <div class="settings-groups">
+            <div class="settings-group">
+              <h4 class="settings-group-title">Formátování</h4>
+              <div class="settings-grid">
+                <label class="toggle-checkbox">
+                  <input type="checkbox" id="setting-bold" checked>
+                  <span class="checkmark"></span>
+                  Tučné
+                </label>
+                <label class="toggle-checkbox">
+                  <input type="checkbox" id="setting-italic" checked>
+                  <span class="checkmark"></span>
+                  Kurzíva
+                </label>
+                <label class="toggle-checkbox">
+                  <input type="checkbox" id="setting-colors">
+                  <span class="checkmark"></span>
+                  Barvy
+                  </label>
+                  <label class="toggle-checkbox">
+                  <input type="checkbox" id="setting-fonts">
+                  <span class="checkmark"></span>
+                  Fonty
+                  </label>
+                  <label class="toggle-checkbox">
+                  <input type="checkbox" id="setting-alignment">
+                  <span class="checkmark"></span>
+                  Zarovnání
+                  </label>
+              </div>
+              </div>
+              <div class="settings-group">
+                <h4 class="settings-group-title">Struktura</h4>
+                <div class="settings-grid">
+                <label class="toggle-checkbox">
+                  <input type="checkbox" id="setting-headings" checked>
+                  <span class="checkmark"></span>
+                  Nadpisy
+                </label>
+                <label class="toggle-checkbox">
+                  <input type="checkbox" id="setting-links" checked>
+                  <span class="checkmark"></span>
+                  Odkazy
+                  </label>
+                  <label class="toggle-checkbox">
+                  <input type="checkbox" id="setting-lists" checked>
+                  <span class="checkmark"></span>
+                  Seznamy
+                  </label>
+                  <label class="toggle-checkbox">
+                  <input type="checkbox" id="setting-detect-lists" checked>
+                  <span class="checkmark"></span>
+                  Detekce seznamů
+                  </label>
+                  <label class="toggle-checkbox">
+                  <input type="checkbox" id="setting-tables" checked>
+                  <span class="checkmark"></span>
+                  Tabulky
+                  </label>
+              </div>
+              </div>
+          </div>
+        </div>
       </header>
 
       <main class="layout-container">
         <!-- LEFT SIDE: INPUT & SETTINGS -->
         <section class="panel input-panel">
-          <div class="panel-header">
-            <h2>1. Vstup</h2>
-          </div>
-          
-          <div class="settings-container glass-card">
-            <h3>Zachovat styly</h3>
-            <div class="settings-grid">
-              <label class="toggle-checkbox">
-                <input type="checkbox" id="setting-bold" checked>
-                <span class="checkmark"></span>
-                Tučné
-              </label>
-              <label class="toggle-checkbox">
-                <input type="checkbox" id="setting-italic" checked>
-                <span class="checkmark"></span>
-                Kurzíva
-              </label>
-              <label class="toggle-checkbox">
-                <input type="checkbox" id="setting-links" checked>
-                <span class="checkmark"></span>
-                Odkazy
-              </label>
-              <label class="toggle-checkbox">
-                <input type="checkbox" id="setting-lists" checked>
-                <span class="checkmark"></span>
-                Seznamy
-              </label>
-              <label class="toggle-checkbox">
-                <input type="checkbox" id="setting-detect-lists" checked>
-                <span class="checkmark"></span>
-                Detekce seznamů
-              </label>
-              <label class="toggle-checkbox">
-                <input type="checkbox" id="setting-headings" checked>
-                <span class="checkmark"></span>
-                Nadpisy
-              </label>
-              <label class="toggle-checkbox">
-                <input type="checkbox" id="setting-tables" checked>
-                <span class="checkmark"></span>
-                Tabulky
-              </label>
-              <label class="toggle-checkbox">
-                <input type="checkbox" id="setting-colors">
-                <span class="checkmark"></span>
-                Barvy
-              </label>
-              <label class="toggle-checkbox">
-                <input type="checkbox" id="setting-fonts">
-                <span class="checkmark"></span>
-                Fonty
-              </label>
-              <label class="toggle-checkbox">
-                <input type="checkbox" id="setting-alignment">
-                <span class="checkmark"></span>
-                Zarovnání
-              </label>
-            </div>
-          </div>
 
-          <div class="editor-container glass-card">
-            <div class="editor-header">
-              <h3>Zde vložte obsah</h3>
-              <button id="clear-btn" class="btn btn-secondary">Vymazat</button>
-            </div>
+          <div class="editor-container glass-card" style="position: relative;">
+            <button id="clear-btn" class="btn btn-secondary floating-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+              <span class="btn-text">Vymazat</span>
+            </button>
             <!-- Using contenteditable to capture the rich HTML payload -->
             <div id="rich-input" class="rich-textarea" contenteditable="true" placeholder="Zde vložte obsah z MS Word (Ctrl+V / Cmd+V)..."></div>
           </div>
@@ -92,12 +106,11 @@
 
         <!-- RIGHT SIDE: OUTPUT -->
         <section class="panel output-panel">
-          <div class="panel-header">
-            <h2>2. Výstup</h2>
-            <button id="copy-btn" class="btn btn-primary">Kopírovat do schránky (Rich Text)</button>
-          </div>
-          
-          <div class="editor-container glass-card output-container">
+          <div class="editor-container glass-card output-container" style="position: relative;">
+            <button id="copy-btn" class="btn btn-primary floating-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <span class="btn-text">Kopírovat do schránky (Rich Text)</span>
+            </button>
             <div id="html-output" class="rich-textarea" placeholder="Zde se zobrazí čisté HTML..."></div>
           </div>
         </section>

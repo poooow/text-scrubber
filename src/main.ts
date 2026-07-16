@@ -64,6 +64,30 @@ function unwrap(el: Element) {
 }
 
 function detectAndConvertLists(body: HTMLElement, doc: Document) {
+  let currentP: HTMLParagraphElement | null = null
+  const nodes = Array.from(body.childNodes)
+  for (const node of nodes) {
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const el = node as Element
+      const tagName = el.tagName.toLowerCase()
+      if (['p', 'div', 'ul', 'ol', 'table', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
+        currentP = null
+        continue
+      }
+    }
+    
+    if (node.nodeType === Node.TEXT_NODE || node.nodeType === Node.ELEMENT_NODE) {
+      if (node.nodeType === Node.TEXT_NODE && !node.textContent?.trim() && !currentP) {
+        continue
+      }
+      if (!currentP) {
+        currentP = doc.createElement('p')
+        node.parentNode?.insertBefore(currentP, node)
+      }
+      currentP.appendChild(node)
+    }
+  }
+
   const brs = Array.from(body.querySelectorAll('p br, div br'))
   for (const br of brs) {
     const block = br.closest('p, div')

@@ -10,12 +10,19 @@ const copyBtn = document.getElementById('copy-btn') as HTMLButtonElement
 const settingsContainer = document.getElementById('settings-container') as HTMLDivElement
 const settingsCollapseBtn = document.getElementById('settings-collapse-btn') as HTMLElement
 
-// 2. Initialize Settings
+// 2. Initialize Settings & Cache
 initSettings(processInput)
+
+const savedInput = localStorage.getItem('scrubber-input-cache')
+if (savedInput) {
+  richInput.innerHTML = savedInput
+}
 
 // 3. Process Input
 function processInput() {
   const html = richInput.innerHTML
+  localStorage.setItem('scrubber-input-cache', html)
+  
   if (!html.trim()) {
     htmlOutput.innerHTML = ''
     return

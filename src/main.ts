@@ -12,6 +12,7 @@ const settings = {
   italic: document.getElementById('setting-italic') as HTMLInputElement,
   links: document.getElementById('setting-links') as HTMLInputElement,
   lists: document.getElementById('setting-lists') as HTMLInputElement,
+  detectLists: document.getElementById('setting-detect-lists') as HTMLInputElement,
   headings: document.getElementById('setting-headings') as HTMLInputElement,
   tables: document.getElementById('setting-tables') as HTMLInputElement,
   colors: document.getElementById('setting-colors') as HTMLInputElement,
@@ -60,6 +61,70 @@ function unwrap(el: Element) {
     parent.insertBefore(el.firstChild, el)
   }
   parent.removeChild(el)
+}
+
+function detectAndConvertLists(body: HTMLElement, doc: Document) {
+  const paragraphs = Array.from(body.querySelectorAll('p, div'))
+  const bulletRegex = /^\s*([•·\-*])[\s\xA0]+(.*)/s
+  
+  let currentList: HTMLUListElement | null = null
+  
+  for (let i = 0; i < paragraphs.length; i++) {
+    const p = paragraphs[i]
+    const text = p.textContent || ''
+    const match = text.match(bulletRegex)
+    
+    if (match) {
+      const treeWalker = doc.createTreeWalker(p, NodeFilter.SHOW_TEXT, null)
+      let currentNode = treeWalker.nextNode()
+      let bulletRemoved = false
+      let spaceRemoved = false
+
+      while (currentNode) {
+        const nodeText = currentNode.nodeValue || ''
+        if (!bulletRemoved) {
+          const bulletMatch = nodeText.match(/^\s*([•·\-*])/)
+          if (bulletMatch) {
+            currentNode.nodeValue = nodeText.replace(/^\s*[•·\-*]/, '')
+            bulletRemoved = true
+            
+            const afterBulletText = currentNode.nodeValue
+            const spaceMatch = afterBulletText.match(/^[\s\xA0]+/)
+            if (spaceMatch) {
+              currentNode.nodeValue = afterBulletText.replace(/^[\s\xA0]+/, '')
+              spaceRemoved = true
+            }
+          } else if (nodeText.trim().length > 0) {
+            break
+          }
+        } else if (!spaceRemoved) {
+          const spaceMatch = nodeText.match(/^[\s\xA0]+/)
+          if (spaceMatch) {
+            currentNode.nodeValue = nodeText.replace(/^[\s\xA0]+/, '')
+            spaceRemoved = true
+          } else if (nodeText.trim().length > 0) {
+            spaceRemoved = true
+          }
+        } else {
+          break
+        }
+        currentNode = treeWalker.nextNode()
+      }
+      
+      if (!currentList) {
+        currentList = doc.createElement('ul')
+        p.parentNode?.insertBefore(currentList, p)
+      }
+      const li = doc.createElement('li')
+      while (p.firstChild) {
+        li.appendChild(p.firstChild)
+      }
+      currentList.appendChild(li)
+      p.parentNode?.removeChild(p)
+    } else {
+      currentList = null
+    }
+  }
 }
 
 // 3. Clean HTML Logic
@@ -190,6 +255,10 @@ function cleanMsWordHtml(html: string): string {
         continue
       }
     }
+  }
+
+  if (settings.detectLists.checked) {
+    detectAndConvertLists(doc.body, doc)
   }
 
   // Remove empty inline tags that might have been left behind

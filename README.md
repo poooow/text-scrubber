@@ -43,3 +43,41 @@ npm run dev
 ```bash
 npm run build
 ```
+
+## Nasazení na GitHub Pages
+
+Projekt je připravený pro nasazení přes balíček `gh-pages` a skript `npm run deploy`.
+
+### První nasazení
+
+1. Ověřte, že v `package.json` je správně vyplněná hodnota `homepage`:
+ - `https://UZIVATEL.github.io/REPOZITAR`
+2. Nainstalujte závislosti:
+
+```bash
+npm install
+```
+
+1. Spusťte nasazení:
+
+```bash
+npm run deploy
+```
+
+Skript provede build a publikuje obsah složky `dist` do větve `gh-pages`.
+
+### Nastavení GitHub Pages v repozitáři
+
+1. Otevřete repozitář na GitHubu.
+2. Přejděte do **Settings -> Pages**.
+3. Jako zdroj zvolte **Deploy from a branch**.
+4. Vyberte větev **gh-pages** a složku **/(root)**.
+5. Uložte změny.
+
+### Další nasazení
+
+Pro každou další aktualizaci stačí:
+
+```bash
+npm run deploy
+```
